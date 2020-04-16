@@ -1,3 +1,3 @@
 # DataBase-Management-System
 
-A DBMS simulator adding B+ trees 
+A DBMS simulator includes B+ trees for query optimization
