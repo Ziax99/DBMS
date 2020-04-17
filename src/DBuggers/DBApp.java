@@ -609,7 +609,7 @@ public class DBApp {
 		pageAddresses.removeAll(remPage);
 		serializeTable(table);
 	}
-
+	@SuppressWarnings({"unchecked", "rawtypes"})
 	public void deleteFromTableClusteringKey(String strTableName, Hashtable<String, Object> htblColNameValue)
 			throws DBAppException, ClassNotFoundException, IOException {
 		Table table = (Table) deSerialize(strTableName);
@@ -745,7 +745,9 @@ public class DBApp {
 			throws ClassNotFoundException, IOException, DBAppException {
 
 		Table table = (Table) deSerialize(strTableName);
-		inputValidity(strTableName, htblColNameValue);
+		htblColNameValue=modifyForPolygon(strTableName, htblColNameValue);
+		inputValidity(strTableName, htblColNameValue);	
+
 		Vector<Vector<Ref>> Union = new Vector<>();
 		Hashtable<String, Object> used = new Hashtable<>();
 		for (int i = 0; i < table.getBTreeIndices().size(); i++) {
@@ -863,10 +865,19 @@ public class DBApp {
 		}
 		
 	}
+	private Hashtable<String,Object> modifyForPolygon(String strTableName,Hashtable<String,Object> htblColNameValue) throws DBAppException, IOException{
+		for(Entry<String,Object> e : htblColNameValue.entrySet()) {
+			if(getType(strTableName, e.getKey()).equals("DBuggers.PolygonModified")) {
+				htblColNameValue.put(e.getKey(),new PolygonModified((Polygon)e.getValue()));
+			}
+		}
+		return htblColNameValue;
+
+	}
 
 	@SuppressWarnings("unchecked")
 	public Iterator<Tuple> selectFromTable(SQLTerm[] arrSQLTerms, String[] starrOperators)
-			throws ClassNotFoundException, IOException {
+			throws ClassNotFoundException, IOException, DBAppException {
 		Vector<Tuple> answerToQuery = new Vector<>();
 		Vector<Iterator<Ref>> all = new Vector<>();
 		for (SQLTerm sql : arrSQLTerms) {
@@ -974,9 +985,12 @@ public class DBApp {
 	}
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	public Iterator solveSingleQuery(SQLTerm query) throws ClassNotFoundException, IOException {
+	public Iterator solveSingleQuery(SQLTerm query) throws ClassNotFoundException, IOException, DBAppException {
 		Vector<Ref> answerToQuery = new Vector<>();
 		Table table = (Table) deSerialize(query.strTableName);
+		if(getType(query.strTableName, query.strColumnName).equals("DBuggers.PolygonModified")) {
+			query.objValue= new PolygonModified((Polygon)query.objValue);
+		}
 		for (BPTree btree : table.getBTreeIndices()) {
 			if (btree.colName.equals(query.strColumnName)) {
 				switch (query.strOperator) {
