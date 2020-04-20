@@ -1043,7 +1043,6 @@ public class DBApp {
 		}
 			if (table.getClusteringKey().equals(query.strColumnName)) { // do binary search to increase efficiency of
 																		// search
-				boolean startFound = false;
 				int pagenum = -1;
 				int idx = -1;
 				Page page= null;
