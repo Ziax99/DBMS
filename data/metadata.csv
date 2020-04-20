@@ -1,14 +1,11 @@
 Table Name, Column Name, Column Type, ClusteringKey, Indexed
-Student,ID,java.lang.Integer,True,False
-Student,age,java.lang.Integer,False,False
-Student,shape,DBuggers.PolygonModified,False,False
 T,gpa,java.lang.Double,False,False
 T,ID,java.lang.Integer,True,False
-T,location,DBuggers.PolygonModified,False,False
 T,age,java.lang.Integer,False,False
 T,name,java.lang.String,False,False
-T,gpa,java.lang.Double,False,False
-T,ID,java.lang.Integer,True,False
-T,location,DBuggers.PolygonModified,False,False
-T,age,java.lang.Integer,False,False
-T,name,java.lang.String,False,False
+Makan,ID,java.lang.Integer,False,False
+Makan,Location,DBuggers.PolygonModified,True,False
+wa2t,ID,java.lang.Integer,False,False
+wa2t,Date,java.util.Date,True,False
+waat,ID,java.lang.Integer,False,False
+waat,Date,java.util.Date,True,False

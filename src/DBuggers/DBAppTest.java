@@ -13,149 +13,186 @@ import bTree.Ref;
 
 public class DBAppTest {
 	public static void main(String[] args) throws DBAppException, IOException, ClassNotFoundException, ParseException {
-		DBApp db  =new DBApp();		
-		Hashtable<String,String> htbl = new Hashtable<>();
-		htbl.put("ID", "java.lang.Integer");
-		htbl.put("name", "java.lang.String");
-		htbl.put("age","java.lang.Integer");
-		htbl.put("gpa", "java.lang.Double");
-		htbl.put("location", "java.awt.Polygon");
-		db.createTable("T", "ID", htbl);
-		db.createBTreeIndex("T", "age");
-		db.createRTreeIndex("T", "location");
+		DBApp db = new DBApp();
+		Hashtable<String, String> htbl = new Hashtable<>();
+		// htbl.put("ID", "java.lang.Integer");
+		// htbl.put("name", "java.lang.String");
+		// htbl.put("age", "java.lang.Integer");
+		// htbl.put("gpa", "java.lang.Double");
+		// db.createTable("T", "ID", htbl);
+		// db.createBTreeIndex("T", "ID");
+		//
+		 Hashtable<String, Object> row = new Hashtable<>();
+		// row.put("ID", 37);
+		// row.put("name", "amumumu");
+		// row.put("age", 400);
+		// row.put("gpa", 1.11);
+		// db.insertIntoTable("T", row);
+		//
+		// row = new Hashtable<String, Object>();
+		// row.put("ID", 50);
+		// row.put("name", "lux");
+		// row.put("age", 14);
+		// row.put("gpa", 1.29);
+		// db.insertIntoTable("T", row);
+		//
+		// row = new Hashtable<String, Object>();
+		// row.put("ID", 5);
+		// row.put("name", "shaimaa");
+		// row.put("age", 12);
+		// row.put("gpa", 6.4);
+		// db.insertIntoTable("T", row);
+		//
+		// row = new Hashtable<String, Object>();
+		// row.put("ID", 1);
+		// row.put("name", "shaimaa");
+		// row.put("age", 34);
+		// row.put("gpa", 0.96);
+		//
+		// db.insertIntoTable("T", row);
+		//
+		// row = new Hashtable<String, Object>();
+		// row.put("ID", 45);
+		// row.put("name", "Matilda");
+		// row.put("age", 69);
+		// row.put("gpa", 0.96);
+		//
+		// db.insertIntoTable("T", row);
+		//
+		// row = new Hashtable<String, Object>();
+		// row.put("ID", 37);
+		// row.put("name", "diana");
+		// row.put("age", 13);
+		// row.put("gpa", 0.62);
+		//
+		// db.insertIntoTable("T", row);
+		//
+		// row = new Hashtable<String, Object>();
+		// row.put("ID", 37);
+		// row.put("name", "diana");
+		// row.put("age", 41);
+		// row.put("gpa", 0.62);
+		//
+		// db.insertIntoTable("T", row);
+		//
+		// row = new Hashtable<String, Object>();
+		// row.put("ID", 37);
+		// row.put("name", "diana");
+		// row.put("age", 27);
+		// row.put("gpa", 7.3);
+		//
+		// db.insertIntoTable("T", row);
+		//
+		// row = new Hashtable<String, Object>();
+		// row.put("ID", 37);
+		// row.put("name", "diana");
+		// row.put("age", 30);
+		// row.put("gpa", 0.62);
+		// db.insertIntoTable("T", row);
+		//
+		// row = new Hashtable<String, Object>();
+		// row.put("ID", 0);
+		// row.put("name", "ko");
+		// row.put("age", 75);
+		// row.put("gpa", 1.1);
+		// db.insertIntoTable("T", row);
+		//
+		// row = new Hashtable<String, Object>();
+		// row.put("ID", 137);
+		// row.put("name", "chloe");
+		// row.put("age", 162);
+		// row.put("gpa", 3.26);
+		// db.insertIntoTable("T", row);
+		//
+		 row = new Hashtable<String, Object>();
+		 row.put("ID", 1);
+		 row.put("name", "bora");
+		 row.put("age", 21);
+		 row.put("gpa", 1.9);
+		 db.insertIntoTable("T", row);
+		// Table table = (Table) (DBApp.deSerialize("T"));
+		// table.printTable();
+		//
+		// Hashtable<String, Object> d = new Hashtable<>();
+		// d.put("ID", 37);
+		// d.put("age", 24);
+		// db.deleteFromTable("T", d);
+		Table table = (Table) (DBApp.deSerialize("T"));
+		 table.printTable();
+		 Hashtable <String,Object> u = new Hashtable<>();
+		 u.put("age", 69);
+		 u.put("name", "lolo");
+		 
+		 db.updateTable("T", "1000000", u);
+		 
+		 table = (Table) (DBApp.deSerialize("T"));
+		 table.printTable();
+		 
+		// db.createRTreeIndex("Makan", "Location");
+		// htbl.put("Location", "java.awt.Polygon");
+		// htbl.put("ID", "java.lang.Integer");
+		// db.createTable("Makan", "Location", htbl);
+		//
+//		int[] x = { 0, 1, 1, 0 };
+//		int[] y = { 0, 0, 1, 1 };
+//		Polygon poly = new Polygon(x, y, 4);
+//
+//		Hashtable<String, Object> row = new Hashtable<String, Object>();
+//		row.put("ID", 6);
+//		row.put("Location", poly);
+//		db.insertIntoTable("Makan", row);
 
-		Hashtable <String,Object> row = new Hashtable<>();
-		row.put("ID", 37);
-		row.put("name", "amumumu");
-		row.put("age", 400);
-		row.put("gpa", 4.2);
-		int x1[]= {1,2,3,4};
-		int y1[]= {3,1,4,6};
-		row.put("location", new Polygon(x1,y1,4));
-		db.insertIntoTable("T", row);
-		
-		
-		row = new Hashtable<String, Object>();
-		row.put("ID", 24);
-		row.put("name", "lux");
-		row.put("age", 14);
-		row.put("gpa", 1.29);
-		int x2[]= {1,4,2,6,8};
-		int y2[]= {2,9,5,1,2};
-		row.put("location", new Polygon(x2,y2,5));
-		db.insertIntoTable("T", row);
-		
-		row = new Hashtable<String, Object>();
-		row.put("ID", 5);
-		row.put("name", "shaimaa");
-		row.put("age", 12);
-		row.put("gpa", 6.4);
-		int x3[]= {1,6,8};
-		int y3[]= {2,1,2};
-		row.put("location", new Polygon(x3,y3,3));
-
-		db.insertIntoTable("T", row);
-		
-		row = new Hashtable<String, Object>();
-		row.put("ID", 100);
-		row.put("name", "shaimaa");
-		row.put("age", 69);
-		row.put("gpa", 0.96);
-		int x4[]= {10,1,4,2,6,8};
-		int y4[]= {100,2,9,5,1,2};
-		row.put("location", new Polygon(x4,y4,6));
-
-		db.insertIntoTable("T", row);
-		
-		row = new Hashtable<String, Object>();
-		row.put("ID", 45);
-		row.put("name", "Matilda");
-		row.put("age", 69);
-		row.put("gpa", 0.96);
-		int x5[]= {2,6,8};
-		int y5[]= {5,1,2};
-		row.put("location", new Polygon(x5,y5,3));
-
-		db.insertIntoTable("T", row); 
-		
-		row = new Hashtable<String, Object>();
-		row.put("ID", 37);
-		row.put("name", "diana");
-		row.put("age", 13);
-		row.put("gpa",0.62);
-		int x6[]= {6,8};
-		int y6[]= {1,2};
-		row.put("location", new Polygon(x6,y6,2));
-
-		db.insertIntoTable("T", row);
-		
-		row = new Hashtable<String, Object>();
-		row.put("ID", 37);
-		row.put("name", "diana");
-		row.put("age", 41);
-		row.put("gpa", 0.62);
-		int x7[]= {8};
-		int y7[]= {2};
-		row.put("location", new Polygon(x7,y7,1));
-
-		db.insertIntoTable("T", row);
-		
-		row = new Hashtable<String, Object>();
-		row.put("ID", 37);
-		row.put("name", "diana");
-		row.put("age", 27);
-		row.put("gpa", 7.3);
-		int x8[]= {13,8,190};
-		int y8[]= {17,2,263};
-		row.put("location", new Polygon(x8,y8,3));
-
-		db.insertIntoTable("T", row);
-		
-//		row = new Hashtable<String, Object>();
-//		row.put("ID", 37);
-//		row.put("name", "diana");
-//		row.put("age", 30);
-//		row.put("gpa", 0.62);
-//		db.insertIntoTable("T", row);
-//		
-//		
-//		row = new Hashtable<String, Object>();
-//		row.put("ID", 37);
-//		row.put("name", "diana");
-//		row.put("age", 58);
-//		row.put("gpa", 0.62);
-//		db.insertIntoTable("T", row);
-//		
-//		row = new Hashtable<String, Object>();
-//		row.put("ID", 37);
-//		row.put("name", "chloe");
-//		row.put("age",16);
-//		row.put("gpa", 3.6);
-//		db.insertIntoTable("T", row);
-//		
-//		row = new Hashtable<String, Object>();
-//		row.put("ID", 40);
-//		row.put("name", "zizo");
-//		row.put("age", 21);
-//		row.put("gpa", 1.59);
-//		db.insertIntoTable("T", row);
-	
-	Table	table = (Table)(DBApp.deSerialize("T"));
-		table.printTable();
-		Hashtable <String,Object>  htb = new Hashtable<>();
-		htb.put("name", "diana");
-		
-		db.deleteFromTable("T", htb);
-		table = (Table) DBApp.deSerialize("T");
-		table.printTable();
-//		SQLTerm s[]= new SQLTerm[1];
-//		 s[0] = new SQLTerm("T", "age", "=", 69);
-//		Iterator<Tuple> i = db.selectFromTable(s, null); 
-//		while(i.hasNext()) {
-//			System.out.println(i.next());
-//		}
-//		table = (Table) DBApp.deSerialize("T");
+		// int[] x2 = {0, 2, 2, 0};
+		// int[] y2 = {0, 0, 2, 2};
+		// Polygon poly = new Polygon(x2, y2, 4);
+		// row.put("ID", 302);
+		// row.put("Location", poly);
+		// db.insertIntoTable("Makan", row);
+		//
+		// int[] x3 = {0, 1};
+		// int[] y3 = {0, 0};
+		// Polygon poly = new Polygon(x3, y3, 2);
+		// row.put("ID", 500);
+		// row.put("Location", poly);
+		// db.insertIntoTable("Makan", row);
+		//
+		// int[] x4 = {-1, 0, 0, -1};
+		// int[] y4 = {-1, -1, 0, 0};
+		// poly = new Polygon(x4, y4, 4);
+		// row.put("ID", 0);
+		// row.put("Location", poly);
+		// db.insertIntoTable("Makan", row);
+		//
+		// int[] x5 = {0, 1};
+		// int[] y5 = {0, 0};
+		// poly = new Polygon(x5, y5, 2);
+		// row.put("ID", 33);
+		// row.put("Location", poly);
+		// db.insertIntoTable("Makan", row);
+		//
+		// int[] x6 = {0, 2, 2, 0};
+		// int[] y6 = {0, 0, 1, 1};
+		// poly = new Polygon(x6, y6, 4);
+		// row.put("ID", 5);
+		// row.put("Location", poly);
+		// db.insertIntoTable("Makan", row);
+		//
+		//
+//		Table table = (Table)(DBApp.deSerialize("Makan"));
 //		table.printTable();
-//		
+//		htbl.put("Date", "java.util.Date");
+//		htbl.put("ID", "java.lang.Integer");
+//		db.createTable("waat", "Date", htbl);
+//		db.createBTreeIndex("waat", "Date");
+//		SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy");
+//		Date date = formatter.parse("12/03/2021");
+//
+//		row.put("Date", date);
+//		row.put("ID", 134);
+//		db.insertIntoTable("waat", row);
+//
+//		Table table = (Table) (DBApp.deSerialize("waat"));
+//		table.printTable();
+
 	}
 }

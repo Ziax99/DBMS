@@ -67,6 +67,7 @@ public class DBApp {
 		}
 		writer.close();
 	}
+
 	public void createRTreeIndex(String strTableName, String strColName)
 			throws DBAppException, ClassNotFoundException, IOException {
 		Table table = (Table) deSerialize(strTableName);
@@ -79,7 +80,6 @@ public class DBApp {
 		fillIndex(strColName, r, table);
 		serializeTable(table);
 	}
-	
 
 	public void createBTreeIndex(String strTableName, String strColName)
 			throws DBAppException, IOException, ClassNotFoundException {
@@ -114,7 +114,7 @@ public class DBApp {
 
 	}
 
-	public void fillIndex(String strColName, Object tree, Table table) throws ClassNotFoundException, IOException {
+	private void fillIndex(String strColName, Object tree, Table table) throws ClassNotFoundException, IOException {
 
 		for (String pageAddress : table.pageAddresses) {
 			Page page = (Page) deSerialize(pageAddress);
@@ -131,20 +131,19 @@ public class DBApp {
 			}
 		}
 	}
+
 	public void insertIntoTable(String strTableName, Hashtable<String, Object> htblColNameValue)
 			throws DBAppException, IOException, ClassNotFoundException {
 		Table table = (Table) deSerialize(strTableName);
-
 		Vector<String> pageAddresses = table.pageAddresses;
 		Tuple tuple = new Tuple(htblColNameValue, strTableName);
 		Object[] re = insertFirst(tuple, table);
-		int idx = (int)re[0];
-		Tuple newRecord = (Tuple)re[1];
-		Page prevPage = idx == 0 ? null : (Page)deSerialize(pageAddresses.get(idx - 1));
+		int idx = (int) re[0];
+		Tuple newRecord = (Tuple) re[1];
+		Page prevPage = idx == 0 ? null : (Page) deSerialize(pageAddresses.get(idx - 1));
 		boolean first = tuple == newRecord;
 		boolean newTupleInserted = newRecord == null; // A flag to check if the tuple has placed successfully
 
-		
 		for (int i = idx; i < pageAddresses.size(); i++) {
 			String pageAddress = pageAddresses.get(i);
 			Page page = (Page) deSerialize(pageAddress);
@@ -211,7 +210,8 @@ public class DBApp {
 		}
 		serializeTable(table);
 	}
-	public Object hasIndex(Table table) {
+
+	private Object hasIndex(Table table) {
 		Object clusteringKeyTree = null;
 		for (BPTree tree : table.BTreeIndices) {
 			if (tree.colName.equals(table.clusteringKeyName)) {
@@ -226,41 +226,41 @@ public class DBApp {
 		return clusteringKeyTree;
 	}
 
-	public Object[] insertFirst(Tuple tuple, Table table) throws ClassNotFoundException, IOException {
+	private Object[] insertFirst(Tuple tuple, Table table) throws ClassNotFoundException, IOException {
 		Object clusteringKeyTree = hasIndex(table);
-		if(clusteringKeyTree == null) {
-			Object[] re = {0, tuple}; 
+		if (clusteringKeyTree == null) {
+			Object[] re = { 0, tuple };
 			return re;
 		}
 		Ref ref = null;
-		if(clusteringKeyTree instanceof BPTree) 
-			ref = ((BPTree) clusteringKeyTree).ceiling((Comparable)tuple.clusteringKey);
+		if (clusteringKeyTree instanceof BPTree)
+			ref = ((BPTree) clusteringKeyTree).ceiling((Comparable) tuple.clusteringKey);
 		else
-			ref = ((RTree) clusteringKeyTree).ceiling((Comparable)tuple.clusteringKey);
+			ref = ((RTree) clusteringKeyTree).ceiling((Comparable) tuple.clusteringKey);
 
 		Vector<String> pageAddresses = table.pageAddresses;
 
-		if(pageAddresses.size() == 0) {
-			Object[] re = {0, tuple};
+		if (pageAddresses.size() == 0) {
+			Object[] re = { 0, tuple };
 			return re;
 		}
-		if(ref == null) {
-			Object[] re = {pageAddresses.size() - 1, tuple};
+		if (ref == null) {
+			Object[] re = { pageAddresses.size() - 1, tuple };
 			return re;
 		}
 		int low = 0;
 		int hi = pageAddresses.size() - 1;
 		int mid = 0;
 		int refno = Integer.parseInt(ref.getPage().substring(table.tableName.length() + 5));
-		while(low <= hi) {
+		while (low <= hi) {
 			mid = low + hi >> 1;
-		if(pageAddresses.get(mid).equals(ref.getPage()))
-			break;
-		int midno = Integer.parseInt(pageAddresses.get(mid).substring(table.tableName.length() + 5));
-		if(refno > midno)
-			low = midno + 1;
-		else
-			hi = midno - 1;
+			if (pageAddresses.get(mid).equals(ref.getPage()))
+				break;
+			int midno = Integer.parseInt(pageAddresses.get(mid).substring(table.tableName.length() + 5));
+			if (refno > midno)
+				low = midno + 1;
+			else
+				hi = midno - 1;
 		}
 
 		Page page = (Page) deSerialize(ref.getPage());
@@ -271,16 +271,15 @@ public class DBApp {
 			updateRecords(index, page, ref.getPage(), table);
 			Tuple newRecord = (Tuple) res[1];
 			serializePage(page);
-			Object[]re = {1, newRecord};
+			Object[] re = { 1, newRecord };
 			return re;
 		}
 		Page prevPage = (Page) deSerialize(pageAddresses.get(mid - 1));
-		if (tuple.compareTo(page.getFirst()) < 0
-				&& prevPage.getSize() < MaximumRowsCountinPage) {
+		if (tuple.compareTo(page.getFirst()) < 0 && prevPage.getSize() < MaximumRowsCountinPage) {
 			prevPage.insert(tuple);
 			InsertInAllIndicies(prevPage.getSize() - 1, prevPage, tuple, table);
 			serializePage(prevPage);
-			Object[] re = {pageAddresses.size(), null};
+			Object[] re = { pageAddresses.size(), null };
 			return re;
 		}
 		Object[] res = page.insert(tuple);
@@ -289,11 +288,11 @@ public class DBApp {
 		updateRecords(index, page, ref.getPage(), table);
 		Tuple newRecord = (Tuple) res[1];
 		serializePage(page);
-		Object[]re = {mid + 1, newRecord};
+		Object[] re = { mid + 1, newRecord };
 		return re;
 	}
 
-	public void updateInAllIndicies(Page oldPage, String newPageAddress, Tuple tuple, Table table) {
+	private void updateInAllIndicies(Page oldPage, String newPageAddress, Tuple tuple, Table table) {
 		String pageAddress = oldPage.tableName + "_page" + oldPage.pageNumber;
 		Ref oldRef = new Ref(pageAddress, MaximumRowsCountinPage - 1);
 		Ref newRef = new Ref(newPageAddress, 0);
@@ -305,7 +304,7 @@ public class DBApp {
 			tree.updateRef((Comparable) tuple.getColNameValue().get(tree.colName), oldRef, newRef);
 	}
 
-	public void InsertInAllIndicies(int index, Page page, Tuple tuple, Table table) {
+	private void InsertInAllIndicies(int index, Page page, Tuple tuple, Table table) {
 		String pageAddress = page.tableName + "_page" + page.pageNumber;
 		Ref ref = new Ref(pageAddress, index);
 
@@ -317,13 +316,13 @@ public class DBApp {
 
 	}
 
-	public void updateRecords(int index, Page page, String pageAddress, Table table) {
+	private void updateRecords(int index, Page page, String pageAddress, Table table) {
 		Vector<Tuple> records = page.records;
 		for (int i = index + 1; i < records.size(); i++) {
 
 			Ref oldRef = new Ref(pageAddress, i - 1);
 			Ref newRef = new Ref(pageAddress, i);
- 
+
 			for (BPTree bt : table.BTreeIndices)
 				bt.updateRef((Comparable) records.get(i).getColNameValue().get(bt.colName), oldRef, newRef);
 
@@ -331,6 +330,7 @@ public class DBApp {
 				tree.updateRef((Comparable) records.get(i).getColNameValue().get(tree.colName), oldRef, newRef);
 		}
 	}
+
 	static void serializeTable(Table table) throws IOException {
 		String newTableName = "classes/DBuggers/" + table.tableName + ".class";
 
@@ -366,7 +366,7 @@ public class DBApp {
 		return o;
 	}
 
-	public static Object parser(String s, String strTableName) throws ParseException, IOException {
+	private static Object parser(String s, String strTableName) throws ParseException, IOException {
 
 		BufferedReader br = new BufferedReader(new FileReader("data/metadata.csv"));
 		StringBuilder csvContent = new StringBuilder();
@@ -413,9 +413,8 @@ public class DBApp {
 
 	}
 
-	public void updateTable(String strTableName, String strClusteringKey,
-			Hashtable<String, Object> htblColNameValue)
-					throws DBAppException, ClassNotFoundException, IOException, ParseException {
+	public void updateTable(String strTableName, String strClusteringKey, Hashtable<String, Object> htblColNameValue)
+			throws DBAppException, ClassNotFoundException, IOException, ParseException {
 		Table table = (Table) deSerialize(strTableName);
 		inputValidity(strTableName, htblColNameValue);
 		Comparable updateRecord = (Comparable) parser(strClusteringKey, strTableName);
@@ -423,8 +422,6 @@ public class DBApp {
 		Vector<String> pageAddresses = table.pageAddresses;
 
 		Object clusteringKeyTree = hasIndex(table);
-
-
 
 		if (clusteringKeyTree == null) {
 			for (String pageAddress : pageAddresses) {
@@ -438,16 +435,16 @@ public class DBApp {
 				while (low <= hi) {
 					int mid = low + hi >> 1;
 
-				Comparable midRecord = (Comparable) records.get(mid).clusteringKey;
+					Comparable midRecord = (Comparable) records.get(mid).clusteringKey;
 
-				if (midRecord.equals(updateRecord)) {
-					hi = mid - 1;
-					pos = mid;
-				}
-				if (midRecord.compareTo(updateRecord) > 0)
-					hi = mid - 1;
-				else
-					low = mid + 1;
+					if (midRecord.equals(updateRecord)) {
+						hi = mid - 1;
+						pos = mid;
+					}
+					if (midRecord.compareTo(updateRecord) > 0)
+						hi = mid - 1;
+					else
+						low = mid + 1;
 				}
 				if (pos == -1)
 					break;
@@ -469,9 +466,9 @@ public class DBApp {
 		} else {
 			Vector<Ref> refs = null;
 			if (clusteringKeyTree instanceof BPTree)
-				refs = ((BPTree)clusteringKeyTree).search(updateRecord);
+				refs = ((BPTree) clusteringKeyTree).search(updateRecord);
 			else
-				refs = ((RTree)clusteringKeyTree).search(updateRecord);
+				refs = ((RTree) clusteringKeyTree).search(updateRecord);
 			Collections.sort(refs);
 			int index = 0;
 			for (String pageAddress : pageAddresses) {
@@ -494,17 +491,16 @@ public class DBApp {
 	}
 
 	// TODO check if key is deleted if vector of refs is empty
-	public static void updateRecord(Table table, Hashtable<String, Object> htblColNameValue, Tuple tuple, Ref ref) {
+	private static void updateRecord(Table table, Hashtable<String, Object> htblColNameValue, Tuple tuple, Ref ref) {
 		tuple.TouchDate = new Date();
 
 		for (Map.Entry<String, Object> e : htblColNameValue.entrySet()) {
 			String colName = e.getKey();
 			Comparable oldValue = (Comparable) tuple.colNameValue.get(colName);
 			Comparable newValue = null;
-			if(e.getValue() instanceof java.awt.Polygon) {
-				newValue = (Comparable)new PolygonModified((Polygon)e.getValue());
-			}
-			else
+			if (e.getValue() instanceof java.awt.Polygon) {
+				newValue = (Comparable) new PolygonModified((Polygon) e.getValue());
+			} else
 				newValue = (Comparable) e.getValue();
 			tuple.colNameValue.put(e.getKey(), newValue);
 			for (BPTree tree : table.BTreeIndices)
@@ -519,7 +515,8 @@ public class DBApp {
 				}
 		}
 	}
-	public static void inputValidity(String strTableName, Hashtable<String, Object> htblColNameValue)
+
+	private static void inputValidity(String strTableName, Hashtable<String, Object> htblColNameValue)
 			throws IOException, DBAppException {
 		BufferedReader br = new BufferedReader(new FileReader("data/metadata.csv"));
 		StringBuilder csvContent = new StringBuilder();
@@ -541,8 +538,18 @@ public class DBApp {
 				Class cls = colVal.getClass();
 				String type = cls.getName();
 				if (!type.equals(array[2])) {
-					throw new DBAppException("Incompatible type: Expected \"" + array[2] + "\" found \"" + type + "\"");
+					if (!type.equals("java.awt.Polygon")) {
+						if (!array[2].equals("DBuggers.PolygonModified"))
+							throw new DBAppException("Incompatible type: Expected \"" + array[2] + "\" found \"" + type + "\"");
+						else
+							throw new DBAppException(
+									"Incompatible type: Expected \"" + "java.awt.Polygon" + "\" found \"" + type + "\"");
+					} else if ((type.equals("java.awt.Polygon") && !array[2].equals("DBuggers.PolygonModified"))) {
+						throw new DBAppException(
+								"Incompatible type: Expected \"" + array[2] + "\" found \"" + type + "\"");
+					}
 				}
+
 			}
 		}
 		for (String k : htblColNameValue.keySet())
@@ -550,19 +557,17 @@ public class DBApp {
 				throw new DBAppException("ERROR: Column \"" + k + "\n not found.");
 	}
 
-	public void deleteFromTableUsingNoIndex(String strTableName, Hashtable<String, Object> htblColNameValue)
+	private void deleteFromTableUsingNoIndex(String strTableName, Hashtable<String, Object> htblColNameValue)
 			throws DBAppException, ClassNotFoundException, IOException {
 		Table table = (Table) deSerialize(strTableName);
-		inputValidity(strTableName, htblColNameValue);
-
 		Vector<String> pageAddresses = table.pageAddresses;
 		// loop over all page addresses
 		ArrayList<String> remPage = new ArrayList<>();
 		for (String pageAddress : pageAddresses) {
 			Page page = (Page) deSerialize(pageAddress);
 			// loop over all tuples in the page's vector of tuples
-			all: for (int i=0 ; i < page.getSize(); i++) {
-					Tuple row = page.getRecords().get(i);
+			all: for (int i = 0; i < page.getSize(); i++) {
+				Tuple row = page.getRecords().get(i);
 				for (Map.Entry e : htblColNameValue.entrySet()) {
 					Comparable thisTuple = (Comparable) e.getValue(); // the delete condition
 					Comparable searchTuple = (Comparable) row.colNameValue.get(e.getKey()); // to be found in table
@@ -570,25 +575,26 @@ public class DBApp {
 						continue all;
 					}
 				}
-				
-				
+
 				Ref ref = new Ref(pageAddress, i);
-				for(BPTree tree: table.getBTreeIndices()) {
-					tree.delete((Comparable)row.colNameValue.get(tree.colName), ref);
-					
+				for (BPTree tree : table.getBTreeIndices()) {
+					tree.delete((Comparable) row.colNameValue.get(tree.colName), ref);
+
 				}
-				for(int j=i+1;j<page.getSize();j++) {
-					for(BPTree tree:table.getBTreeIndices()) {
-						tree.updateRef((Comparable)page.getRecords().get(j).colNameValue.get(tree.colName), new Ref(pageAddress, j), new Ref(pageAddress, j-1));
+				for (int j = i + 1; j < page.getSize(); j++) {
+					for (BPTree tree : table.getBTreeIndices()) {
+						tree.updateRef((Comparable) page.getRecords().get(j).colNameValue.get(tree.colName),
+								new Ref(pageAddress, j), new Ref(pageAddress, j - 1));
 					}
 				}
-				for(RTree tree: table.getRTreeIndices()) {
-					tree.delete((Comparable)row.colNameValue.get(tree.colName), ref);
-					
+				for (RTree tree : table.getRTreeIndices()) {
+					tree.delete((Comparable) row.colNameValue.get(tree.colName), ref);
+
 				}
-				for(int j=i+1;j<page.getSize();j++) {
-					for(RTree tree:table.getRTreeIndices()) {
-						tree.updateRef((Comparable)page.getRecords().get(j).colNameValue.get(tree.colName), new Ref(pageAddress, j), new Ref(pageAddress, j-1));
+				for (int j = i + 1; j < page.getSize(); j++) {
+					for (RTree tree : table.getRTreeIndices()) {
+						tree.updateRef((Comparable) page.getRecords().get(j).colNameValue.get(tree.colName),
+								new Ref(pageAddress, j), new Ref(pageAddress, j - 1));
 					}
 				}
 				page.getRecords().remove(i);
@@ -602,25 +608,23 @@ public class DBApp {
 				} else
 					serializePage(page);
 			}
-				
-				
-			}
-			
+
+		}
+
 		pageAddresses.removeAll(remPage);
 		serializeTable(table);
 	}
-	@SuppressWarnings({"unchecked", "rawtypes"})
-	public void deleteFromTableClusteringKey(String strTableName, Hashtable<String, Object> htblColNameValue)
+
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	private void deleteFromTableClusteringKey(String strTableName, Hashtable<String, Object> htblColNameValue)
 			throws DBAppException, ClassNotFoundException, IOException {
 		Table table = (Table) deSerialize(strTableName);
-		inputValidity(strTableName, htblColNameValue);
-
 		Vector<String> pageAddresses = table.pageAddresses;
 		// loop over all page addresses
 		Page page = null;
 		Vector<String> remPage = new Vector<>();
 		int idx = -1;
-		int pagenum=-1;
+		int pagenum = -1;
 		for (String pageAddress : pageAddresses) {
 			++pagenum;
 			page = (Page) deSerialize(pageAddress);
@@ -637,60 +641,64 @@ public class DBApp {
 					lo = mid + 1;
 				}
 			}
-			if(idx!=-1) break;
+			if (idx != -1)
+				break;
 		}
-	/*
-	 * The clustering key that i am trying to delete upon does not exist so return
-	 */
-		if (idx == -1|| !page.getRecords().get(idx).clusteringKey.equals(htblColNameValue.get(table.getClusteringKey())))return;
+		/*
+		 * The clustering key that i am trying to delete upon does not exist so return
+		 */
+		if (idx == -1
+				|| !page.getRecords().get(idx).clusteringKey.equals(htblColNameValue.get(table.getClusteringKey())))
+			return;
 
 		ArrayList<pair> potentialTBD = new ArrayList<>();
-		boolean broke=false;
-		for(int i=idx;i<page.getSize();i++) {
+		boolean broke = false;
+		for (int i = idx; i < page.getSize(); i++) {
 			if (page.getRecords().get(idx).clusteringKey.equals(htblColNameValue.get(table.getClusteringKey()))) {
 				pair info = new pair(page.getRecords().get(i), new Ref(pageAddresses.get(pagenum), i));
 				potentialTBD.add(info);
-			}
-			else {
-				broke=true;
+			} else {
+				broke = true;
 				break;
 			}
 		}
-		if(!broke)
-	all:for(int i=pagenum+1;i<table.pageAddresses.size();i++) {
-			page =(Page) deSerialize(table.pageAddresses.get(i));
-			for(int j=0;j<page.getSize();j++) {
-				if (page.getRecords().get(j).clusteringKey.equals(htblColNameValue.get(table.getClusteringKey()))) {
-					pair info = new pair(page.getRecords().get(j), new Ref(pageAddresses.get(i), j));
-					potentialTBD.add(info);
-				}
-				else {
+		if (!broke)
+			all: for (int i = pagenum + 1; i < table.pageAddresses.size(); i++) {
+				page = (Page) deSerialize(table.pageAddresses.get(i));
+				for (int j = 0; j < page.getSize(); j++) {
+					if (page.getRecords().get(j).clusteringKey.equals(htblColNameValue.get(table.getClusteringKey()))) {
+						pair info = new pair(page.getRecords().get(j), new Ref(pageAddresses.get(i), j));
+						potentialTBD.add(info);
+					} else {
 						break all;
+					}
 				}
 			}
-		}
-		
-		Vector <pair> TBDFromPotential= new Vector<>();
-		all: for (pair info :potentialTBD) {
+
+		Vector<pair> TBDFromPotential = new Vector<>();
+		all: for (pair info : potentialTBD) {
 			Tuple row = info.tuple;
 			Ref ref = info.ref;
 			for (Map.Entry e : htblColNameValue.entrySet()) {
 				Comparable thisTuple = (Comparable) e.getValue(); // the delete condition
-				Comparable searchTuple = (Comparable) row.colNameValue.get(e.getKey()); // to be found in the potentially to be deleted rows
+				Comparable searchTuple = (Comparable) row.colNameValue.get(e.getKey()); // to be found in the
+																						// potentially to be deleted
+																						// rows
 				if (thisTuple.compareTo(searchTuple) != 0) {
 					TBDFromPotential.add(info);
 					continue all;
+				}
 			}
-		}
 		}
 		potentialTBD.removeAll(TBDFromPotential);
 		Collections.sort(potentialTBD);
-		for(int i=0;i<potentialTBD.size();i++) {
+		for (int i = 0; i < potentialTBD.size(); i++) {
 			pair p = potentialTBD.get(i);
-			Ref ref= p.ref;
-			page =(Page) deSerialize(ref.getPage());
-			for(BPTree btree: table.getBTreeIndices()) {    //deleting the ref of the instance to be removed from the table
-				btree.delete((Comparable)p.tuple.colNameValue.get(btree.colName), p.ref);
+			Ref ref = p.ref;
+			page = (Page) deSerialize(ref.getPage());
+			for (BPTree btree : table.getBTreeIndices()) { // deleting the ref of the instance to be removed from the
+															// table
+				btree.delete((Comparable) p.tuple.colNameValue.get(btree.colName), p.ref);
 			}
 			for (int j = ref.getIndexInPage() + 1; j < page.getSize(); j++) { // shifting all records in the tree
 				for (BPTree btree : table.getBTreeIndices()) {
@@ -698,8 +706,9 @@ public class DBApp {
 							new Ref(ref.getPage(), j), new Ref(ref.getPage(), j - 1));
 				}
 			}
-			for(RTree rtree: table.getRTreeIndices()) {    //deleting the ref of the instance to be removed from the table
-				rtree.delete((Comparable)p.tuple.colNameValue.get(rtree.colName), p.ref);
+			for (RTree rtree : table.getRTreeIndices()) { // deleting the ref of the instance to be removed from the
+															// table
+				rtree.delete((Comparable) p.tuple.colNameValue.get(rtree.colName), p.ref);
 			}
 			for (int j = ref.getIndexInPage() + 1; j < page.getSize(); j++) { // shifting all records in the tree
 				for (RTree rtree : table.getRTreeIndices()) {
@@ -713,31 +722,34 @@ public class DBApp {
 				String newPageName = "classes/DBuggers/" + page.tableName + "_page" + page.pageNumber + ".class";
 				File f = new File(newPageName);
 				f.delete();
-			}
-			else {
+			} else {
 				serializePage(page);
 			}
 		}
 		pageAddresses.removeAll(remPage);
 		serializeTable(table);
 	}
-	private static class pair implements Comparable<pair> { 
+
+	private static class pair implements Comparable<pair> {
 		Tuple tuple;
 		Ref ref;
+
 		public pair(Tuple t, Ref r) {
 			tuple = t;
 			ref = r;
 		}
+
 		@Override
 		public boolean equals(Object o) {
-			pair p =(pair) o;
-			return tuple.equals(p.tuple)&& ref.equals(p.ref);
+			pair p = (pair) o;
+			return tuple.equals(p.tuple) && ref.equals(p.ref);
 		}
+
 		@Override
-		public int compareTo(pair o) {			// TODO Auto-generated method stub
+		public int compareTo(pair o) { // TODO Auto-generated method stub
 			return ref.compareTo(o.ref);
 		}
-		
+
 	}
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
@@ -745,18 +757,18 @@ public class DBApp {
 			throws ClassNotFoundException, IOException, DBAppException {
 
 		Table table = (Table) deSerialize(strTableName);
-		htblColNameValue=modifyForPolygon(strTableName, htblColNameValue);
-		inputValidity(strTableName, htblColNameValue);	
+		htblColNameValue = modifyForPolygon(strTableName, htblColNameValue);
+		inputValidity(strTableName, htblColNameValue);
 
 		Vector<Vector<Ref>> Union = new Vector<>();
 		Hashtable<String, Object> used = new Hashtable<>();
 		for (int i = 0; i < table.getBTreeIndices().size(); i++) {
 			BPTree curIndex = table.getBTreeIndices().get(i);
 			if (htblColNameValue.containsKey(curIndex.colName)) {
-				Vector <Ref> refVec =curIndex.search((Comparable) htblColNameValue.get(curIndex.colName));
-				if(refVec!=null) {
-				Union.add(refVec);
-				used.put(curIndex.colName, htblColNameValue.get(curIndex.colName));
+				Vector<Ref> refVec = curIndex.search((Comparable) htblColNameValue.get(curIndex.colName));
+				if (refVec != null) {
+					Union.add(refVec);
+					used.put(curIndex.colName, htblColNameValue.get(curIndex.colName));
 				}
 			}
 
@@ -764,15 +776,15 @@ public class DBApp {
 		for (int i = 0; i < table.getRTreeIndices().size(); i++) {
 			RTree curIndex = table.getRTreeIndices().get(i);
 			if (htblColNameValue.containsKey(curIndex.colName)) {
-				Vector <Ref> refVec =curIndex.search((Comparable) htblColNameValue.get(curIndex.colName));
-				if(refVec!=null) {
-				Union.add(refVec);
-				used.put(curIndex.colName, htblColNameValue.get(curIndex.colName));
+				Vector<Ref> refVec = curIndex.search((Comparable) htblColNameValue.get(curIndex.colName));
+				if (refVec != null) {
+					Union.add(refVec);
+					used.put(curIndex.colName, htblColNameValue.get(curIndex.colName));
 				}
 			}
 
 		}
-		
+
 		Hashtable<String, Object> remaining = new Hashtable<>(); // a hash table that contains the rest of the query not
 		// covered by B+ trees
 		for (Entry<String, Object> e : htblColNameValue.entrySet()) {
@@ -781,11 +793,10 @@ public class DBApp {
 			}
 		}
 		if (Union.isEmpty()) {
-			if(htblColNameValue.containsKey(table.clusteringKeyName)) {
-			deleteFromTableClusteringKey(strTableName, htblColNameValue);
-			}
-			else
-			deleteFromTableUsingNoIndex(strTableName, htblColNameValue);
+			if (htblColNameValue.containsKey(table.clusteringKeyName)) {
+				deleteFromTableClusteringKey(strTableName, htblColNameValue);
+			} else
+				deleteFromTableUsingNoIndex(strTableName, htblColNameValue);
 		} else {
 			Vector<Ref> toBeDeleted = new Vector<Ref>(Union.get(0));
 			Vector<Ref> toRemainInTBD = new Vector<>(); // the vector that filters toBeDeleted
@@ -831,7 +842,7 @@ public class DBApp {
 								new Ref(curRef.getPage(), j), new Ref(curRef.getPage(), j - 1));
 					}
 				}
-				
+
 				for (RTree rtree : table.getRTreeIndices()) { // removing the instance of the object to be deleted from
 					// the R tree
 					rtree.delete((Comparable) curPage.getRecords().get(idx).colNameValue.get(rtree.colName), curRef);
@@ -843,7 +854,6 @@ public class DBApp {
 								new Ref(curRef.getPage(), j), new Ref(curRef.getPage(), j - 1));
 					}
 				}
-
 
 				curPage.getRecords().remove(idx);
 				if (curPage.getRecords().isEmpty()) {
@@ -863,12 +873,14 @@ public class DBApp {
 			serializeTable(table);
 
 		}
-		
+
 	}
-	private Hashtable<String,Object> modifyForPolygon(String strTableName,Hashtable<String,Object> htblColNameValue) throws DBAppException, IOException{
-		for(Entry<String,Object> e : htblColNameValue.entrySet()) {
-			if(getType(strTableName, e.getKey()).equals("DBuggers.PolygonModified")) {
-				htblColNameValue.put(e.getKey(),new PolygonModified((Polygon)e.getValue()));
+
+	private Hashtable<String, Object> modifyForPolygon(String strTableName, Hashtable<String, Object> htblColNameValue)
+			throws DBAppException, IOException {
+		for (Entry<String, Object> e : htblColNameValue.entrySet()) {
+			if (getType(strTableName, e.getKey()).equals("DBuggers.PolygonModified")) {
+				htblColNameValue.put(e.getKey(), new PolygonModified((Polygon) e.getValue()));
 			}
 		}
 		return htblColNameValue;
@@ -883,10 +895,10 @@ public class DBApp {
 		for (SQLTerm sql : arrSQLTerms) {
 			all.add(solveSingleQuery(sql));
 		}
-		if(arrSQLTerms.length==1) {
-			while(all.get(0).hasNext()) {
+		if (arrSQLTerms.length == 1) {
+			while (all.get(0).hasNext()) {
 				Ref ref = all.get(0).next();
-				Page page =(Page) deSerialize(ref.getPage());
+				Page page = (Page) deSerialize(ref.getPage());
 				answerToQuery.add(page.getRecords().get(ref.getIndexInPage()));
 			}
 			return answerToQuery.iterator();
@@ -923,11 +935,11 @@ public class DBApp {
 			Tuple tuple = page.getRecords().get(curRef.getIndexInPage());
 			answerToQuery.add(tuple);
 		}
-		
+
 		return answerToQuery.iterator();
 	}
 
-	public Iterator<Ref> OR(Iterator<Ref> V1, Iterator<Ref> V2) {
+	private Iterator<Ref> OR(Iterator<Ref> V1, Iterator<Ref> V2) {
 		Vector<Ref> answerToQuery = new Vector<>();
 		HashSet<Ref> h = new HashSet<Ref>();
 		while (V1.hasNext()) {
@@ -959,7 +971,7 @@ public class DBApp {
 		return answerToQuery.iterator();
 	}
 
-	public Iterator<Ref> XOR(Iterator<Ref> V1, Iterator<Ref> V2) {
+	private Iterator<Ref> XOR(Iterator<Ref> V1, Iterator<Ref> V2) {
 		Vector<Ref> answerToQuery = new Vector<>();
 		Vector<Ref> contentV1 = new Vector<>();
 		Vector<Ref> contentV2 = new Vector<>();
@@ -985,11 +997,11 @@ public class DBApp {
 	}
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	public Iterator solveSingleQuery(SQLTerm query) throws ClassNotFoundException, IOException, DBAppException {
+	private Iterator solveSingleQuery(SQLTerm query) throws ClassNotFoundException, IOException, DBAppException {
 		Vector<Ref> answerToQuery = new Vector<>();
 		Table table = (Table) deSerialize(query.strTableName);
-		if(getType(query.strTableName, query.strColumnName).equals("DBuggers.PolygonModified")) {
-			query.objValue= new PolygonModified((Polygon)query.objValue);
+		if (getType(query.strTableName, query.strColumnName).equals("DBuggers.PolygonModified")) {
+			query.objValue = new PolygonModified((Polygon) query.objValue);
 		}
 		for (BPTree btree : table.getBTreeIndices()) {
 			if (btree.colName.equals(query.strColumnName)) {
@@ -1041,207 +1053,205 @@ public class DBApp {
 				return answerToQuery.iterator();
 			}
 		}
-			if (table.getClusteringKey().equals(query.strColumnName)) { // do binary search to increase efficiency of
-																		// search
-				int pagenum = -1;
-				int idx = -1;
-				Page page= null;
-				TheBiggerPurpose: for (String pageAddress : table.pageAddresses) {
-					pagenum++;
-					 page= (Page) deSerialize(pageAddress);
-					int lo = 0;
-					int hi = page.getSize() - 1;
-					while (lo <= hi) {
-						int mid = lo + hi >> 1;
-						if (((Comparable) (page.getRecords().get(mid).clusteringKey))
-								.compareTo((Comparable) query.objValue) >= 0) {
-							idx = mid;
-							hi = mid - 1;
+		if (table.getClusteringKey().equals(query.strColumnName)) { // do binary search to increase efficiency of
+																	// search
+			int pagenum = -1;
+			int idx = -1;
+			Page page = null;
+			TheBiggerPurpose: for (String pageAddress : table.pageAddresses) {
+				pagenum++;
+				page = (Page) deSerialize(pageAddress);
+				int lo = 0;
+				int hi = page.getSize() - 1;
+				while (lo <= hi) {
+					int mid = lo + hi >> 1;
+					if (((Comparable) (page.getRecords().get(mid).clusteringKey))
+							.compareTo((Comparable) query.objValue) >= 0) {
+						idx = mid;
+						hi = mid - 1;
+					} else {
+						lo = mid + 1;
+					}
+				}
+				if (idx != -1) {
+					break TheBiggerPurpose;
+				}
+			}
+			if (idx == -1) {
+				idx = page.getSize();
+			}
+
+			theSwitch: switch (query.strOperator) {
+			case "=": {
+				for (int i = idx; i < page.getSize(); i++) {
+					if (((Comparable) page.getRecords().get(i).clusteringKey)
+							.compareTo((Comparable) query.objValue) == 0) {
+						answerToQuery.add(new Ref(table.pageAddresses.get(pagenum), i));
+					} else {
+						return answerToQuery.iterator();
+					}
+				}
+				while (++pagenum < table.pageAddresses.size()) {
+					Page p = (Page) deSerialize(table.pageAddresses.get(pagenum));
+					for (int j = 0; j < p.getSize(); j++) {
+						if (((Comparable) p.getRecords().get(j).clusteringKey)
+								.compareTo((Comparable) query.objValue) == 0) {
+							answerToQuery.add(new Ref(table.pageAddresses.get(pagenum), j));
 						} else {
-							lo = mid + 1;
+							return answerToQuery.iterator();
 						}
 					}
-					if (idx != -1) {
-						break TheBiggerPurpose;
+				}
+				break theSwitch;
+
+			}
+			case ">":
+			case ">=": {
+				for (int i = idx; i < page.getSize(); i++) {
+					boolean cond1 = ((Comparable) page.getRecords().get(i).clusteringKey)
+							.compareTo((Comparable) query.objValue) >= 0;
+					if (cond1 && query.strOperator.equals(">=")) {
+						answerToQuery.add(new Ref(table.pageAddresses.get(pagenum), i));
+					} else {
+						boolean cond2 = ((Comparable) page.getRecords().get(i).clusteringKey)
+								.compareTo((Comparable) query.objValue) > 0;
+						if (cond2 && query.strOperator.equals(">")) {
+
+							answerToQuery.add(new Ref(table.pageAddresses.get(pagenum), i));
+						}
+					}
+
+				}
+				while (++pagenum < table.pageAddresses.size()) {
+					Page p = (Page) deSerialize(table.pageAddresses.get(pagenum));
+					for (int j = 0; j < p.getSize(); j++) {
+						boolean cond1 = ((Comparable) p.getRecords().get(j).clusteringKey)
+								.compareTo((Comparable) query.objValue) >= 0;
+						if (cond1 && query.strOperator.equals(">=")) {
+
+							answerToQuery.add(new Ref(table.pageAddresses.get(pagenum), j));
+						} else {
+							boolean cond2 = ((Comparable) p.getRecords().get(j).clusteringKey)
+									.compareTo((Comparable) query.objValue) > 0;
+							if (cond2 && query.strOperator.equals(">")) {
+
+								answerToQuery.add(new Ref(table.pageAddresses.get(pagenum), j));
+							}
+
+						}
+					}
+
+				}
+				return answerToQuery.iterator();
+			}
+
+			case "!=": {
+				for (String pageAdd : table.pageAddresses) {
+					Page p = (Page) deSerialize(pageAdd);
+					for (int i = 0; i < p.getSize(); i++) {
+						if (((Comparable) p.getRecords().get(i).clusteringKey)
+								.compareTo((Comparable) query.objValue) != 0) {
+							answerToQuery.add(new Ref(pageAdd, i));
+						}
+					}
+
+				}
+				return answerToQuery.iterator();
+			}
+
+			case "<=": {
+				int pagenumcopy = pagenum;
+
+				boolean broken = false;
+				for (int i = idx; i < page.getSize(); i++) {
+					if (((Comparable) page.getRecords().get(i).clusteringKey)
+							.compareTo((Comparable) query.objValue) == 0) {
+						answerToQuery.add(new Ref(table.pageAddresses.get(pagenum), i));
+					} else {
+						broken = true;
+						break;
 					}
 				}
-				if(idx==-1) {
-					idx=page.getSize();
+				if (!broken)
+					while (++pagenumcopy < table.pageAddresses.size()) {
+						Page p = (Page) deSerialize(table.pageAddresses.get(pagenumcopy));
+						for (int j = 0; j < p.getSize(); j++) {
+							if (((Comparable) p.getRecords().get(j).clusteringKey)
+									.compareTo((Comparable) query.objValue) == 0) {
+								answerToQuery.add(new Ref(table.pageAddresses.get(pagenumcopy), j));
+							} else {
+								break;
+							}
+						}
+					}
+			}
+			case "<": {
+				for (int i = idx - 1; i >= 0; i--) {
+					answerToQuery.add(new Ref(table.pageAddresses.get(pagenum), i));
 				}
-					
-						theSwitch: switch (query.strOperator) {
-						case "=": {
-							for (int i = idx; i < page.getSize(); i++) {
-								if (((Comparable) page.getRecords().get(i).clusteringKey)
-										.compareTo((Comparable) query.objValue) == 0) {
-									answerToQuery.add(new Ref(table.pageAddresses.get(pagenum), i));
-								} else {
-									return answerToQuery.iterator();
-								}
-							}
-							while (++pagenum < table.pageAddresses.size()) {
-								Page p = (Page) deSerialize(table.pageAddresses.get(pagenum));
-								for (int j = 0; j < p.getSize(); j++) {
-									if (((Comparable) p.getRecords().get(j).clusteringKey)
-											.compareTo((Comparable) query.objValue) == 0) {
-										answerToQuery.add(new Ref(table.pageAddresses.get(pagenum), j));
-									} else {
-										return answerToQuery.iterator();
-									}
-								}
-							}
-							break theSwitch;
-
-						}
-						case ">":
-						case ">=": {
-							for (int i = idx; i < page.getSize(); i++) {
-								boolean cond1 = ((Comparable) page.getRecords().get(i).clusteringKey)
-										.compareTo((Comparable) query.objValue) >= 0;
-								if (cond1 && query.strOperator.equals(">=")) {
-									answerToQuery.add(new Ref(table.pageAddresses.get(pagenum), i));
-								} else {
-									boolean cond2 = ((Comparable) page.getRecords().get(i).clusteringKey)
-											.compareTo((Comparable) query.objValue) > 0;
-									if (cond2 && query.strOperator.equals(">")) {
-
-										answerToQuery.add(new Ref(table.pageAddresses.get(pagenum), i));
-									}
-								}
-
-							}
-							while (++pagenum < table.pageAddresses.size()) {
-								Page p = (Page) deSerialize(table.pageAddresses.get(pagenum));
-								for (int j = 0; j < p.getSize(); j++) {
-									boolean cond1 = ((Comparable) p.getRecords().get(j).clusteringKey)
-											.compareTo((Comparable) query.objValue) >= 0;
-									if (cond1 && query.strOperator.equals(">=")) {
-
-										answerToQuery.add(new Ref(table.pageAddresses.get(pagenum), j));
-									} else {
-										boolean cond2 = ((Comparable) p.getRecords().get(j).clusteringKey)
-												.compareTo((Comparable) query.objValue) > 0;
-										if (cond2 && query.strOperator.equals(">")) {
-
-											answerToQuery.add(new Ref(table.pageAddresses.get(pagenum), j));
-										}
-
-									}
-								}
-
-							}
-							return answerToQuery.iterator();
-						}
-
-						case "!=": {
-							for (String pageAdd : table.pageAddresses) {
-								Page p = (Page) deSerialize(pageAdd);
-								for (int i = 0; i < p.getSize(); i++) {
-									if (((Comparable) p.getRecords().get(i).clusteringKey)
-											.compareTo((Comparable) query.objValue) != 0) {
-										answerToQuery.add(new Ref(pageAdd, i));
-									}
-								}
-
-							}
-							return answerToQuery.iterator();
-						}
-
-						case "<=": {
-							int pagenumcopy = pagenum;
-
-							boolean broken = false;
-							for (int i = idx; i < page.getSize(); i++) {
-								if (((Comparable) page.getRecords().get(i).clusteringKey)
-										.compareTo((Comparable) query.objValue) == 0) {
-									answerToQuery.add(new Ref(table.pageAddresses.get(pagenum), i));
-								} else {
-									broken = true;
-									break;
-								}
-							}
-							if (!broken)
-								while (++pagenumcopy < table.pageAddresses.size()) {
-									Page p = (Page) deSerialize(table.pageAddresses.get(pagenumcopy));
-									for (int j = 0; j < p.getSize(); j++) {
-										if (((Comparable) p.getRecords().get(j).clusteringKey)
-												.compareTo((Comparable) query.objValue) == 0) {
-											answerToQuery.add(new Ref(table.pageAddresses.get(pagenumcopy), j));
-										} else {
-											break;
-										}
-									}
-								}
-						}
-						case "<": {
-							for (int i = idx - 1; i >= 0; i--) {
-								answerToQuery.add(new Ref(table.pageAddresses.get(pagenum), i));
-							}
-							for (int i = pagenum - 1; i >= 0; i--) {
-								Page p = (Page) deSerialize(table.pageAddresses.get(i));
-								for (int j = 0; j < p.getSize(); j++) {
-									answerToQuery.add(new Ref(table.pageAddresses.get(i), j));
-								}
-							}
-							return answerToQuery.iterator();
-						}
-
-						}
-					
-
+				for (int i = pagenum - 1; i >= 0; i--) {
+					Page p = (Page) deSerialize(table.pageAddresses.get(i));
+					for (int j = 0; j < p.getSize(); j++) {
+						answerToQuery.add(new Ref(table.pageAddresses.get(i), j));
+					}
 				}
-			else {
-				for (String pageAddress : table.pageAddresses) {
-					Page page = (Page) deSerialize(pageAddress);
-					all: for (int i = 0; i < page.getSize(); i++) {
-						switch (query.strOperator) {
-						case "=": {
-							if (((Comparable) page.getRecords().get(i).getColNameValue().get(query.strColumnName))
-									.compareTo(((Comparable) query.objValue)) == 0) {
-								answerToQuery.add(new Ref(pageAddress, i));
-							}
-							continue all;
+				return answerToQuery.iterator();
+			}
+
+			}
+
+		} else {
+			for (String pageAddress : table.pageAddresses) {
+				Page page = (Page) deSerialize(pageAddress);
+				all: for (int i = 0; i < page.getSize(); i++) {
+					switch (query.strOperator) {
+					case "=": {
+						if (((Comparable) page.getRecords().get(i).getColNameValue().get(query.strColumnName))
+								.compareTo(((Comparable) query.objValue)) == 0) {
+							answerToQuery.add(new Ref(pageAddress, i));
 						}
-						case "!=": {
-							if (((Comparable) page.getRecords().get(i).getColNameValue().get(query.strColumnName))
-									.compareTo(((Comparable) query.objValue)) != 0) {
-								answerToQuery.add(new Ref(pageAddress, i));
-							}
-							continue all;
+						continue all;
+					}
+					case "!=": {
+						if (((Comparable) page.getRecords().get(i).getColNameValue().get(query.strColumnName))
+								.compareTo(((Comparable) query.objValue)) != 0) {
+							answerToQuery.add(new Ref(pageAddress, i));
 						}
-						case "<=": {
-							if (((Comparable) page.getRecords().get(i).getColNameValue().get(query.strColumnName))
-									.compareTo(((Comparable) query.objValue)) <= 0) {
-								answerToQuery.add(new Ref(pageAddress, i));
-							}
-							continue all;
+						continue all;
+					}
+					case "<=": {
+						if (((Comparable) page.getRecords().get(i).getColNameValue().get(query.strColumnName))
+								.compareTo(((Comparable) query.objValue)) <= 0) {
+							answerToQuery.add(new Ref(pageAddress, i));
 						}
-						case "<": {
-							if (((Comparable) page.getRecords().get(i).getColNameValue().get(query.strColumnName))
-									.compareTo(((Comparable) query.objValue)) < 0) {
-								answerToQuery.add(new Ref(pageAddress, i));
-							}
-							continue all;
+						continue all;
+					}
+					case "<": {
+						if (((Comparable) page.getRecords().get(i).getColNameValue().get(query.strColumnName))
+								.compareTo(((Comparable) query.objValue)) < 0) {
+							answerToQuery.add(new Ref(pageAddress, i));
 						}
-						case ">": {
-							if (((Comparable) page.getRecords().get(i).getColNameValue().get(query.strColumnName))
-									.compareTo(((Comparable) query.objValue)) > 0) {
-								answerToQuery.add(new Ref(pageAddress, i));
-							}
-							continue all;
+						continue all;
+					}
+					case ">": {
+						if (((Comparable) page.getRecords().get(i).getColNameValue().get(query.strColumnName))
+								.compareTo(((Comparable) query.objValue)) > 0) {
+							answerToQuery.add(new Ref(pageAddress, i));
 						}
-						case ">=": {
-							if (((Comparable) page.getRecords().get(i).getColNameValue().get(query.strColumnName))
-									.compareTo(((Comparable) query.objValue)) >= 0) {
-								answerToQuery.add(new Ref(pageAddress, i));
-							}
-							continue all;
+						continue all;
+					}
+					case ">=": {
+						if (((Comparable) page.getRecords().get(i).getColNameValue().get(query.strColumnName))
+								.compareTo(((Comparable) query.objValue)) >= 0) {
+							answerToQuery.add(new Ref(pageAddress, i));
 						}
-						}
+						continue all;
+					}
 					}
 				}
 			}
-		
+		}
+
 		return answerToQuery.iterator();
 	}
 //	public void removeBtreeIndex(String strTableName,String btreeName) throws ClassNotFoundException, IOException {
