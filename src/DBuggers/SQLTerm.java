@@ -10,10 +10,12 @@ public Object objValue;
 		
 	}
 	public SQLTerm(String tableName,String colName, String operator,Object obj) {
+		String typeInTable = 
 		this.strTableName=tableName;
 		this.strColumnName=colName;
 		this.strOperator=operator;
 		this.objValue=obj;
+		
 	}
 	
 }

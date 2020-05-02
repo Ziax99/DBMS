@@ -373,6 +373,7 @@ public class DBApp {
 		String line;
 		while ((line = br.readLine()) != null)
 			csvContent.append(line).append("\n");
+		br.close();
 		TreeSet<String> set = new TreeSet<>();
 
 		String type = "";
@@ -441,7 +442,7 @@ public class DBApp {
 						hi = mid - 1;
 						pos = mid;
 					}
-					if (midRecord.compareTo(updateRecord) > 0)
+					else if (midRecord.compareTo(updateRecord) > 0)
 						hi = mid - 1;
 					else
 						low = mid + 1;
@@ -490,7 +491,6 @@ public class DBApp {
 		serializeTable(table);
 	}
 
-	// TODO check if key is deleted if vector of refs is empty
 	private static void updateRecord(Table table, Hashtable<String, Object> htblColNameValue, Tuple tuple, Ref ref) {
 		tuple.TouchDate = new Date();
 
@@ -523,6 +523,7 @@ public class DBApp {
 		String line;
 		while ((line = br.readLine()) != null)
 			csvContent.append(line).append("\n");
+		br.close();
 		TreeSet<String> set = new TreeSet<>();
 
 		for (String colInfo : csvContent.toString().split("\n")) {
@@ -746,7 +747,7 @@ public class DBApp {
 		}
 
 		@Override
-		public int compareTo(pair o) { // TODO Auto-generated method stub
+		public int compareTo(pair o) { 
 			return ref.compareTo(o.ref);
 		}
 
@@ -757,8 +758,8 @@ public class DBApp {
 			throws ClassNotFoundException, IOException, DBAppException {
 
 		Table table = (Table) deSerialize(strTableName);
-		htblColNameValue = modifyForPolygon(strTableName, htblColNameValue);
 		inputValidity(strTableName, htblColNameValue);
+		htblColNameValue = modifyForPolygon(strTableName, htblColNameValue);
 
 		Vector<Vector<Ref>> Union = new Vector<>();
 		Hashtable<String, Object> used = new Hashtable<>();
@@ -1271,7 +1272,7 @@ public class DBApp {
 		String line;
 		while ((line = br.readLine()) != null)
 			csvContent.append(line).append("\n");
-
+		br.close();
 		for (String colInfo : csvContent.toString().split("\n")) {
 
 			String[] array = colInfo.split(", *");

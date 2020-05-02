@@ -26,7 +26,7 @@ public class Tuple implements Serializable, Comparable<Tuple> {
 		String line;
 		while ((line = br.readLine()) != null)
 			csvContent.append(line).append("\n");
-
+		br.close();
 		for (String colInfo : csvContent.toString().split("\n")) {
 
 			String[] array = colInfo.split(", *");
