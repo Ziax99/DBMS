@@ -1,3 +1,6 @@
 # DataBase-Management-System
 
-A DBMS simulator includes B+ trees for query optimization
+Database Management System with indexing using B+ Trees. The DBMS supports
+Relational Database schemes. 
+
+Implemented with Java.
